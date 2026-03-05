@@ -3,224 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Audit Internal AI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Sistem Audit Internal AI - Kemkomdigi</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        .loader { border-top-color: #3b82f6; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
-        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        /* Animasi transisi tab */
-        .tab-content { transition: opacity 0.3s ease-in-out; }
+        :root {
+            --primary: #003366; 
+            --primary-hover: #004080;
+            --secondary: #f4f6f8;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --warning-hover: #e0a800;
+            --text-main: #333;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: var(--secondary); color: var(--text-main); }
+        .navbar { background-color: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .navbar h1 { margin: 0; font-size: 1.4rem; }
+        .role-badge { background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; }
+        .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+        
+        /* TABS */
+        .tab-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+        .tab { padding: 12px 24px; cursor: pointer; border-radius: 5px 5px 0 0; border: 1px solid transparent; font-weight: 600; color: #555; transition: all 0.3s ease; background: #e9ecef; }
+        .tab:hover { background-color: #d1d5db; }
+        .tab.active { background-color: var(--primary); color: white; border-color: var(--primary); }
+        .content { display: none; }
+        .content.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* CARDS & FORMS */
+        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card h3 { margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; color: var(--primary); }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #444; }
+        select, input[type="file"], textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; font-size: 1rem; }
+        select:focus, textarea:focus, input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,51,102,0.2); }
+        
+        /* BUTTONS */
+        button { background-color: var(--primary); color: white; padding: 14px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: background 0.3s; width: 100%; }
+        button:hover { background-color: var(--primary-hover); }
+        .btn-warning { background-color: var(--warning); color: #333; margin-top: 10px; }
+        .btn-warning:hover { background-color: var(--warning-hover); }
+
+        /* RESULTS AREA */
+        .result-area { background: #fff; border-left: 5px solid var(--primary); padding: 20px; margin-top: 25px; border-radius: 0 8px 8px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: none; line-height: 1.6; }
+        .result-area h1, .result-area h2, .result-area h3 { color: var(--primary); margin-top: 0; }
+        .result-area table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; }
+        .result-area th, .result-area td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .result-area th { background-color: #f8f9fa; }
+        .status-msg { margin-top: 15px; font-weight: bold; text-align: center; }
+
+        /* FEEDBACK AREA */
+        .feedback-area { display: none; background: #fff8e1; border: 1px solid #ffe082; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .feedback-area h4 { margin-top: 0; color: #d84315; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
+<body>
 
-    <div class="max-w-6xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-        
-        <div class="mb-8 text-center">
-            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight mb-4">Sistem Audit Internal AI</h1>
-            <div class="inline-flex bg-gray-200 rounded-lg p-1 space-x-1">
-                <button id="btnTabAudit" class="px-6 py-2.5 rounded-md text-sm font-semibold text-gray-700 bg-white shadow transition-all">📝 Analisis Audit</button>
-                <button id="btnTabKnowledge" class="px-6 py-2.5 rounded-md text-sm font-semibold text-gray-500 hover:text-gray-700 hover:bg-white/50 transition-all">📚 Update Knowledge</button>
+    <div class="navbar">
+        <h1>Sistem Audit Internal AI</h1>
+        <span id="role-tag" class="role-badge">Role: Auditor (View Only)</span>
+    </div>
+
+    <div class="container">
+        <div class="tab-container">
+            <div id="tab-btn-analisis" class="tab active" onclick="switchTab('analisis')">📑 Analisis Audit</div>
+            <div id="tab-btn-knowledge" class="tab" onclick="checkAdminAccess()">🔒 Update Knowledge (Admin)</div>
+        </div>
+
+        <div id="analisis" class="content active">
+            <div class="card">
+                <h3>Mulai Analisis Dokumen</h3>
+                
+                <div class="form-group">
+                    <label>Upload Dokumen yang Akan Diaudit (.pdf / .docx)</label>
+                    <input type="file" id="file_input">
+                </div>
+                
+                <div class="form-group">
+                    <label>Pilih Jenis Audit</label>
+                    <select id="jenis_audit">
+                        <option value="Pengadaan Barang & Jasa (PBJ)">Pengadaan Barang & Jasa (PBJ)</option>
+                        <option value="Audit Kinerja & Anggaran">Audit Kinerja & Anggaran</option>
+                        <option value="Manajemen Risiko & Kepatuhan">Manajemen Risiko & Kepatuhan</option>
+                        <option value="Reviu Laporan Keuangan">Reviu Laporan Keuangan</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Sasaran / Fokus Audit</label>
+                    <textarea id="sasaran_audit" rows="3" placeholder="Contoh: Memastikan tagihan sesuai dengan SLA pada data Zabbix..."></textarea>
+                </div>
+                
+                <button onclick="runAudit()">Jalankan Agen Auditor</button>
+                <div id="audit-status" class="status-msg"></div>
+                
+                <div id="kka-result" class="result-area"></div>
+
+                <div id="feedback-section" class="feedback-area">
+                    <h4>🔍 Validasi & Koreksi Auditor</h4>
+                    <p style="font-size: 0.9em; margin-bottom: 15px;">Koreksi temuan AI yang kurang tepat atau tambahkan instruksi revisi di bawah ini untuk men-<i>generate</i> ulang KKA.</p>
+                    <div class="form-group">
+                        <textarea id="koreksi_auditor" rows="3" placeholder="Contoh: Tambahkan tanggapan PPK berdasarkan Nota Dinas No 304 bahwa Moratel adalah penyedia Smartfren..."></textarea>
+                    </div>
+                    <button class="btn-warning" onclick="revisiAudit()">Revisi & Generate Ulang KKA</button>
+                </div>
+
             </div>
         </div>
 
-        <div class="flex flex-col md:flex-row gap-8">
-            
-            <div class="w-full md:w-1/3 bg-white p-6 rounded-xl shadow-lg border border-gray-100 h-fit">
+        <div id="update-knowledge" class="content">
+            <div class="card">
+                <h3>Admin: Update Knowledge Base</h3>
+                <p style="color: var(--success); font-weight: bold; font-size: 0.9em; margin-top: -10px;">✔ Akses Admin Terverifikasi</p>
                 
-                <div id="formAuditContainer" class="tab-content block">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6 border-b pb-2 border-blue-500">Mulai Analisis Dokumen</h2>
-                    <form id="auditForm" class="space-y-5">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Upload Dokumen (PDF/Word)</label>
-                            <input type="file" id="fileAudit" required accept=".pdf,.doc,.docx"
-                                class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-200 rounded-md">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Audit</label>
-                            <select id="jenisAudit" required
-                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-                                <option value="PBJ">Pengadaan Barang & Jasa (PBJ)</option>
-                                <option value="Kinerja">Audit Kinerja & Anggaran</option>
-                                <option value="SPIP">Manajemen Risiko & SPIP</option>
-                                <option value="Keuangan">Laporan Keuangan</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Sasaran / Fokus Audit</label>
-                            <textarea id="sasaranAudit" rows="3" required placeholder="Misal: Cek indikasi mark-up harga..."
-                                class="mt-1 block w-full p-3 border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"></textarea>
-                        </div>
-                        <button type="submit" id="submitAuditBtn"
-                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                            Buat Kertas Kerja Audit
-                        </button>
-                    </form>
+                <div class="form-group">
+                    <label>Kategori Regulasi/SOP (Variabel: jenis_knowledge)</label>
+                    <select id="jenis_knowledge">
+                        <option value="pengadaan">Regulasi Pengadaan Barang & Jasa</option> 
+                        <option value="kinerja">Standar Kinerja & Anggaran</option>
+                        <option value="manajemen_risiko">Matriks Risiko & Kepatuhan</option>
+                        <option value="laporan_keuangan">Standar Akuntansi Pemerintah</option>
+                        <option value="Standar Audit & Tata Naskah Dinas">Standar Audit & Tata Naskah Dinas</option>
+                    </select>
                 </div>
 
-                <div id="formKnowledgeContainer" class="tab-content hidden">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6 border-b pb-2 border-emerald-500">Upload Aturan Baru</h2>
-                    <form id="knowledgeForm" class="space-y-5">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Upload File (.pdf / .md)</label>
-                            <input type="file" id="fileKnowledge" required accept=".pdf,.md"
-                                class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 border border-gray-200 rounded-md">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Knowledge</label>
-                            <select id="jenisKnowledge" required
-                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md">
-                                <option value="pengadaan">Pengadaan</option>
-                                <option value="kinerja">Kinerja</option>
-                                <option value="manajemen_risiko">Manajemen Risiko</option>
-                                <option value="laporan_keuangan">Laporan Keuangan</option>
-                            </select>
-                        </div>
-                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md">
-                            <p class="text-xs text-yellow-700">Pastikan dokumen bersih dari password. Sistem akan memotong teks otomatis ke dalam Supabase.</p>
-                        </div>
-                        <button type="submit" id="submitKnowledgeBtn"
-                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
-                            Suntikkan ke Database AI
-                        </button>
-                    </form>
+                <div class="form-group">
+                    <label>Hierarki / Tingkat Aturan (Prioritas AI)</label>
+                    <select id="tingkat_aturan">
+                        <option value="internal_kontrak">Kriteria Internal (Kontrak, SLA, SOP, Berita Acara)</option>
+                        <option value="regulasi_nasional">Regulasi Nasional (UU, PP, Perpres, Permen)</option>
+                    </select>
                 </div>
 
-                <div id="loadingStatus" class="hidden mt-6 text-center">
-                    <div class="loader border-4 border-gray-200 rounded-full w-8 h-8 mx-auto mb-2"></div>
-                    <p id="loadingText" class="text-sm text-gray-500 animate-pulse">Sedang memproses...</p>
+                <div class="form-group">
+                    <label>Upload File Regulasi (.pdf / .md)</label>
+                    <input type="file" id="kb_file_input">
                 </div>
+                
+                <button onclick="updateKnowledge()">Suntikkan Dokumen ke Supabase</button>
+                <div id="kb-status" class="status-msg"></div>
             </div>
-
-            <div class="w-full md:w-2/3 bg-white p-8 rounded-xl shadow-lg border border-gray-100 min-h-[500px]">
-                <h3 id="resultTitle" class="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Hasil Output</h3>
-                
-                <div id="resultContainer" class="prose max-w-none text-gray-700 hidden">
-                    </div>
-                
-                <div id="emptyState" class="flex flex-col items-center justify-center h-full text-gray-400 opacity-60 mt-20">
-                    <svg class="w-20 h-20 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <p>Pilih menu di samping untuk memulai.</p>
-                </div>
-            </div>
-
         </div>
     </div>
 
     <script>
-        // ==============================================================================
-        // ⚠️ PENTING: ISI KEDUA URL WEBHOOK INI DENGAN URL N8N ANDA
-        // ==============================================================================
-        
-        // 1. URL untuk Agen Audit (Workflow yang sudah Anda buat sebelumnya)
-        const N8N_WEBHOOK_AUDIT = "https://inspektorat2.app.n8n.cloud/webhook/8add8307-dc82-4c07-96e2-4d46b514a44d"; 
-        
-        // 2. URL untuk Workflow Upload Knowledge (Workflow baru yang khusus upload ke Supabase)
-        const N8N_WEBHOOK_KNOWLEDGE = "https://inspektorat2.app.n8n.cloud/webhook/97a4c7da-c329-4f4f-91f2-d3a821ea3eed"; 
+        // === WAJIB GANTI DENGAN URL WEBHOOK N8N ANDA ===
+        const WEBHOOK_URL_AUDIT = "https://inspektorat2.app.n8n.cloud/webhook/8add8307-dc82-4c07-96e2-4d46b514a44d"; 
+        const WEBHOOK_URL_KNOWLEDGE = "https://inspektorat2.app.n8n.cloud/webhook/97a4c7da-c329-4f4f-91f2-d3a821ea3eed";
 
-        // ==============================================================================
+        let isAdmin = false;
 
-        // DOM Elements
-        const tabAudit = document.getElementById('btnTabAudit');
-        const tabKnowledge = document.getElementById('btnTabKnowledge');
-        const formAuditContainer = document.getElementById('formAuditContainer');
-        const formKnowledgeContainer = document.getElementById('formKnowledgeContainer');
-        const resultTitle = document.getElementById('resultTitle');
-
-        const formAudit = document.getElementById('auditForm');
-        const formKnowledge = document.getElementById('knowledgeForm');
-        
-        const loadingStatus = document.getElementById('loadingStatus');
-        const loadingText = document.getElementById('loadingText');
-        const resultContainer = document.getElementById('resultContainer');
-        const emptyState = document.getElementById('emptyState');
-
-        // Logic Ganti Tab
-        function switchTab(tab) {
-            if (tab === 'audit') {
-                tabAudit.classList.replace('text-gray-500', 'text-gray-700');
-                tabAudit.classList.replace('hover:bg-white/50', 'bg-white');
-                tabAudit.classList.add('shadow');
-                
-                tabKnowledge.classList.replace('text-gray-700', 'text-gray-500');
-                tabKnowledge.classList.replace('bg-white', 'hover:bg-white/50');
-                tabKnowledge.classList.remove('shadow');
-
-                formAuditContainer.classList.remove('hidden');
-                formKnowledgeContainer.classList.add('hidden');
-                resultTitle.innerText = "Kertas Kerja Audit (KKA)";
-            } else {
-                tabKnowledge.classList.replace('text-gray-500', 'text-gray-700');
-                tabKnowledge.classList.replace('hover:bg-white/50', 'bg-white');
-                tabKnowledge.classList.add('shadow');
-                
-                tabAudit.classList.replace('text-gray-700', 'text-gray-500');
-                tabAudit.classList.replace('bg-white', 'hover:bg-white/50');
-                tabAudit.classList.remove('shadow');
-
-                formKnowledgeContainer.classList.remove('hidden');
-                formAuditContainer.classList.add('hidden');
-                resultTitle.innerText = "Status Ingestion (Upload)";
-            }
-            
-            // Reset state sebelah kanan
-            resultContainer.classList.add('hidden');
-            emptyState.classList.remove('hidden');
+        function switchTab(tabId) {
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            if(tabId === 'analisis') document.getElementById('tab-btn-analisis').classList.add('active');
+            else if (tabId === 'update-knowledge') document.getElementById('tab-btn-knowledge').classList.add('active');
         }
 
-        tabAudit.addEventListener('click', () => switchTab('audit'));
-        tabKnowledge.addEventListener('click', () => switchTab('knowledge'));
+        function checkAdminAccess() {
+            if (isAdmin) { switchTab('update-knowledge'); return; }
+            const pass = prompt("Masukkan Password Administrator:");
+            if (pass === "admin123") { 
+                isAdmin = true;
+                document.getElementById('role-tag').innerText = "Role: Administrator (Full Access)";
+                document.getElementById('role-tag').style.background = "#28a745"; 
+                switchTab('update-knowledge');
+            } else if (pass !== null) { alert("Akses Ditolak!"); }
+        }
 
-        // Fungsi Umum untuk Menjalankan Request
-        async function sendDataToN8n(url, formData, loadMessage, btnId) {
-            const btn = document.getElementById(btnId);
-            btn.disabled = true;
-            btn.classList.add('opacity-50', 'cursor-not-allowed');
-            loadingText.innerText = loadMessage;
-            loadingStatus.classList.remove('hidden');
-            resultContainer.classList.add('hidden');
-            emptyState.classList.add('hidden');
+        async function runAudit() { await executeAuditProcess(false); }
+        async function revisiAudit() {
+            const koreksi = document.getElementById('koreksi_auditor').value;
+            if(!koreksi.trim()) return alert("Harap isi catatan koreksi Anda terlebih dahulu!");
+            await executeAuditProcess(true);
+        }
+
+        async function executeAuditProcess(isRevisi) {
+            const fileInput = document.getElementById('file_input');
+            const jenisAudit = document.getElementById('jenis_audit').value;
+            const sasaranAudit = document.getElementById('sasaran_audit').value;
+            const statusDiv = document.getElementById('audit-status');
+            const resultDiv = document.getElementById('kka-result');
+            const feedbackSection = document.getElementById('feedback-section');
+
+            if (!fileInput.files[0]) return alert("Harap pilih dokumen audit!");
+
+            if (isRevisi) {
+                statusDiv.innerHTML = "⌛ AI sedang memproses instruksi revisi Anda... Mohon tunggu.";
+            } else {
+                statusDiv.innerHTML = "⌛ AI sedang membaca dokumen dan mengekstrak temuan... Mohon tunggu.";
+            }
+            statusDiv.style.color = "var(--primary)";
+            resultDiv.style.opacity = "0.5";
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+            formData.append("jenis_audit", jenisAudit);   
+            formData.append("sasaran_audit", sasaranAudit); 
+
+            if (isRevisi) {
+                const catatanKoreksi = document.getElementById('koreksi_auditor').value;
+                formData.append("koreksi_auditor", catatanKoreksi);
+            }
 
             try {
-                const response = await fetch(url, { method: 'POST', body: formData });
-                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-                const data = await response.json();
-                
-                const outputText = data.output || data.text || data.message || JSON.stringify(data);
-                resultContainer.innerHTML = marked.parse(outputText);
-                resultContainer.classList.remove('hidden');
+                const response = await fetch(WEBHOOK_URL_AUDIT, { method: "POST", body: formData });
+                if(response.ok) {
+                    const data = await response.text();
+                    statusDiv.innerHTML = "✅ Kertas Kerja Audit Selesai.";
+                    statusDiv.style.color = "var(--success)";
+                    
+                    resultDiv.innerHTML = marked.parse(data);
+                    resultDiv.style.display = "block";
+                    resultDiv.style.opacity = "1";
+                    feedbackSection.style.display = "block";
+                    
+                    if(isRevisi) document.getElementById('koreksi_auditor').value = ""; 
+                } else { throw new Error("Gagal mengeksekusi workflow n8n."); }
             } catch (error) {
-                console.error('Error:', error);
-                resultContainer.innerHTML = `<div class="p-4 bg-red-50 text-red-700 rounded-md border border-red-200">Terjadi kesalahan: ${error.message}</div>`;
-                resultContainer.classList.remove('hidden');
-            } finally {
-                btn.disabled = false;
-                btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                loadingStatus.classList.add('hidden');
+                statusDiv.innerHTML = "❌ Terjadi kesalahan koneksi ke server n8n. Pastikan webhook aktif.";
+                statusDiv.style.color = "var(--danger)";
+                resultDiv.style.opacity = "1";
             }
         }
 
-        // Event Submit Form Audit (Sama seperti sebelumnya)
-        formAudit.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const formData = new FormData();
-            formData.append('data', document.getElementById('fileAudit').files[0]);
-            formData.append('jenis_audit', document.getElementById('jenisAudit').value);
-            formData.append('sasaran_audit', document.getElementById('sasaranAudit').value);
-            
-            sendDataToN8n(N8N_WEBHOOK_AUDIT, formData, "Agen AI sedang memeriksa dokumen. Mohon tunggu...", "submitAuditBtn");
-        });
+        async function updateKnowledge() {
+            const fileInput = document.getElementById('kb_file_input');
+            const jenisKnowledge = document.getElementById('jenis_knowledge').value;
+            const tingkatAturan = document.getElementById('tingkat_aturan').value; // Ambil nilai hierarki aturan
+            const statusDiv = document.getElementById('kb-status');
 
-        // Event Submit Form Knowledge (Baru)
-        formKnowledge.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const formData = new FormData();
-            formData.append('data', document.getElementById('fileKnowledge').files[0]);
-            formData.append('jenis_knowledge', document.getElementById('jenisKnowledge').value); // Akan mengirim: pengadaan, kinerja, dll
+            if (!fileInput.files[0]) return alert("Harap pilih file regulasi/SOP!");
             
-            sendDataToN8n(N8N_WEBHOOK_KNOWLEDGE, formData, "Mengunggah dan memotong teks ke Supabase. Mohon tunggu...", "submitKnowledgeBtn");
-        });
+            statusDiv.innerHTML = "⌛ Sedang menyuntikkan dokumen beserta metadata ke Vektor Database...";
+            statusDiv.style.color = "var(--primary)";
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+            formData.append("jenis_knowledge", jenisKnowledge); 
+            formData.append("tingkat_aturan", tingkatAturan); // Kirim ke n8n sebagai metadata
+
+            try {
+                const response = await fetch(WEBHOOK_URL_KNOWLEDGE, { method: "POST", body: formData });
+                if(response.ok) {
+                    statusDiv.innerHTML = "✅ Berhasil! Dokumen kini tersimpan di Supabase dengan label prioritasnya.";
+                    statusDiv.style.color = "var(--success)";
+                    fileInput.value = ""; 
+                } else { throw new Error("Gagal mengeksekusi workflow n8n."); }
+            } catch (error) {
+                statusDiv.innerHTML = "❌ Terjadi kesalahan saat mengunggah data ke n8n.";
+                statusDiv.style.color = "var(--danger)";
+            }
+        }
     </script>
 </body>
 </html>
